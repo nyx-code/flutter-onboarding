@@ -15,3 +15,8 @@ const double spaceS = 8.0;
 const double spaceM = 16.0;
 
 const GoogleImage = "images/google_logo.png";
+
+const Duration buttonAnimationDuration = Duration(milliseconds: 600);
+const Duration cardAnimationDuration = Duration(milliseconds: 400);
+const Duration rippleAnimationDuration = Duration(milliseconds: 400);
+const Duration loginAnimationDuration = Duration(milliseconds: 1500);

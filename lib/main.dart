@@ -11,6 +11,14 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: Onboarding());
+        home: Builder(
+          builder: (BuildContext context) {
+            var screenHeight = MediaQuery.of(context).size.height;
+
+            return Onboarding(
+              screenHeight: screenHeight,
+            );
+          },
+        ));
   }
 }

@@ -16,11 +16,39 @@ import 'package:flutter_onboarding/screens/onboarding/widgets/next_page_button.d
 import 'package:flutter_onboarding/screens/onboarding/widgets/onboarding_page_indicator.dart';
 
 class Onboarding extends StatefulWidget {
+  final double screenHeight;
+
+  const Onboarding({
+    Key key,
+    this.screenHeight,
+  }) : super(key: key);
+
   @override
   _OnboardingState createState() => _OnboardingState();
 }
 
-class _OnboardingState extends State<Onboarding> {
+class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
+  AnimationController _cardsAnimationController;
+  Animation<Offset> _slideAnimationLightCard;
+  Animation<Offset> _slideAnimationDarkCard;
+
+  @override
+  void initState() {
+    super.initState();
+    _cardsAnimationController = AnimationController(
+      vsync: this,
+      duration: cardAnimationDuration,
+    );
+
+    _setCardsSlideInAnimation();
+  }
+
+  @override
+  void dispose() {
+    _cardsAnimationController.dispose();
+    super.dispose();
+  }
+
   int _currentPage = 1;
 
   bool get isFirstPage => _currentPage == 1;
@@ -33,6 +61,8 @@ class _OnboardingState extends State<Onboarding> {
           darkCardChild: CommunityDarkCardContent(),
           lightCardChild: CommunityLightCardContent(),
           pageNumber: 1,
+          lightCardOffsetAnimation: _slideAnimationLightCard,
+          darkCardOffsetAnimation: _slideAnimationDarkCard,
         );
       case 2:
         return OnboardingPage(
@@ -40,6 +70,8 @@ class _OnboardingState extends State<Onboarding> {
           darkCardChild: EducationDarkCardContent(),
           lightCardChild: EducationLightCardContent(),
           pageNumber: 2,
+          lightCardOffsetAnimation: _slideAnimationLightCard,
+          darkCardOffsetAnimation: _slideAnimationDarkCard,
         );
       case 3:
         return OnboardingPage(
@@ -47,10 +79,52 @@ class _OnboardingState extends State<Onboarding> {
           darkCardChild: WorkDarkCardContent(),
           lightCardChild: WorkLightCardContent(),
           pageNumber: 3,
+          lightCardOffsetAnimation: _slideAnimationLightCard,
+          darkCardOffsetAnimation: _slideAnimationDarkCard,
         );
       default:
         throw Exception("Page with number '$_currentPage' does not exist.");
     }
+  }
+
+  void _setCardsSlideOutAnimation() {
+    setState(() {
+      _slideAnimationLightCard = Tween<Offset>(
+        begin: Offset(3.0, 0.0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _cardsAnimationController,
+        curve: Curves.easeOut,
+      ));
+      _slideAnimationDarkCard = Tween<Offset>(
+        begin: Offset(1.5, 0.0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _cardsAnimationController,
+        curve: Curves.easeOut,
+      ));
+    });
+  }
+
+  void _setCardsSlideInAnimation() {
+    setState(() {
+      _slideAnimationLightCard = Tween<Offset>(
+        begin: Offset.zero,
+        end: Offset(-3.0, 0.0),
+      ).animate(CurvedAnimation(
+        parent: _cardsAnimationController,
+        curve: Curves.easeIn,
+      ));
+      _slideAnimationDarkCard = Tween<Offset>(
+        begin: Offset.zero,
+        end: Offset(-1.5, 0.0),
+      ).animate(CurvedAnimation(
+        parent: _cardsAnimationController,
+        curve: Curves.easeIn,
+      ));
+
+      _cardsAnimationController.reset();
+    });
   }
 
   void _setNextPage(int nextPageNumber) {
@@ -59,13 +133,20 @@ class _OnboardingState extends State<Onboarding> {
     });
   }
 
-  void _nextPage() {
+  Future<void> _nextPage() async {
     switch (_currentPage) {
       case 1:
+        await _cardsAnimationController.forward();
         _setNextPage(2);
+        _setCardsSlideOutAnimation();
+        await _cardsAnimationController.forward();
+        _setCardsSlideInAnimation();
         break;
       case 2:
+        await _cardsAnimationController.forward();
         _setNextPage(3);
+        _setCardsSlideOutAnimation();
+        await _cardsAnimationController.forward();
         break;
       case 3:
         _goToLogin();

@@ -6,16 +6,20 @@ class OnboardingPage extends StatelessWidget {
   final Widget textColumn;
   final Widget darkCardChild;
   final Widget lightCardChild;
+  final Animation<Offset> lightCardOffsetAnimation;
+  final Animation<Offset> darkCardOffsetAnimation;
 
   final int pageNumber;
 
-  const OnboardingPage(
-      {Key key,
-      @required this.textColumn,
-      @required this.darkCardChild,
-      @required this.lightCardChild,
-      @required this.pageNumber})
-      : super(key: key);
+  const OnboardingPage({
+    Key key,
+    @required this.textColumn,
+    @required this.darkCardChild,
+    @required this.lightCardChild,
+    @required this.pageNumber,
+    @required this.lightCardOffsetAnimation,
+    @required this.darkCardOffsetAnimation,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -24,12 +28,17 @@ class OnboardingPage extends StatelessWidget {
         CardsStack(
           darkCardChild: darkCardChild,
           lightCardChild: lightCardChild,
+          lightCardOffsetAnimation: lightCardOffsetAnimation,
+          darkCardOffsetAnimation: darkCardOffsetAnimation,
           pageNumber: pageNumber,
         ),
         SizedBox(height: pageNumber % 2 == 1 ? 50.0 : 25.0),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: paddingL),
-          child: textColumn,
+          child: AnimatedSwitcher(
+            child: textColumn,
+            duration: cardAnimationDuration,
+          ),
         ),
       ],
     );
