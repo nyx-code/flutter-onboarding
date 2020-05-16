@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_onboarding/constants.dart';
 import 'package:flutter_onboarding/screens/login/login.dart';
@@ -32,6 +34,9 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
   Animation<Offset> _slideAnimationLightCard;
   Animation<Offset> _slideAnimationDarkCard;
 
+  AnimationController _pageIndicatorAnimationController;
+  Animation<double> _pageIndicatorAnimation;
+
   @override
   void initState() {
     super.initState();
@@ -40,12 +45,19 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
       duration: cardAnimationDuration,
     );
 
+    _pageIndicatorAnimationController = AnimationController(
+      vsync: this,
+      duration: buttonAnimationDuration,
+    );
+
     _setCardsSlideInAnimation();
+    _setPageIndiactorAnimation();
   }
 
   @override
   void dispose() {
     _cardsAnimationController.dispose();
+    _pageIndicatorAnimationController.dispose();
     super.dispose();
   }
 
@@ -127,6 +139,22 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
     });
   }
 
+  void _setPageIndiactorAnimation({bool isClockWiseRotation = true}) {
+    var multiplicator = isClockWiseRotation ? 2 : -2;
+
+    setState(() {
+      _pageIndicatorAnimation = Tween(
+        begin: 0.0,
+        end: multiplicator * pi,
+      ).animate(CurvedAnimation(
+        curve: Curves.easeIn,
+        parent: _pageIndicatorAnimationController,
+      ));
+
+      _pageIndicatorAnimationController.reset();
+    });
+  }
+
   void _setNextPage(int nextPageNumber) {
     setState(() {
       _currentPage = nextPageNumber;
@@ -136,20 +164,29 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
   Future<void> _nextPage() async {
     switch (_currentPage) {
       case 1:
-        await _cardsAnimationController.forward();
-        _setNextPage(2);
-        _setCardsSlideOutAnimation();
-        await _cardsAnimationController.forward();
-        _setCardsSlideInAnimation();
+        if (_pageIndicatorAnimation.status == AnimationStatus.dismissed) {
+          _pageIndicatorAnimationController.forward();
+          await _cardsAnimationController.forward();
+          _setNextPage(2);
+          _setCardsSlideOutAnimation();
+          await _cardsAnimationController.forward();
+          _setCardsSlideInAnimation();
+          _setPageIndiactorAnimation(isClockWiseRotation: false);
+        }
         break;
       case 2:
-        await _cardsAnimationController.forward();
-        _setNextPage(3);
-        _setCardsSlideOutAnimation();
-        await _cardsAnimationController.forward();
+        if (_pageIndicatorAnimation.status == AnimationStatus.dismissed) {
+          _pageIndicatorAnimationController.forward();
+          await _cardsAnimationController.forward();
+          _setNextPage(3);
+          _setCardsSlideOutAnimation();
+          await _cardsAnimationController.forward();
+        }
         break;
       case 3:
-        _goToLogin();
+        if (_pageIndicatorAnimation.status == AnimationStatus.completed) {
+          _goToLogin();
+        }
         break;
       default:
     }
@@ -177,15 +214,22 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
             Expanded(
               child: _getPage(),
             ),
-            Container(
-              padding: EdgeInsets.only(bottom: 50.0),
-              child: OnboardingPageIndicator(
-                currentPage: _currentPage,
+            Padding(
+              padding: const EdgeInsets.only(bottom: paddingL),
+              child: AnimatedBuilder(
+                animation: _pageIndicatorAnimation,
                 child: NextPageButton(
-                  onPressed: _nextPage,
+                  onPressed: () async => await _nextPage(),
                 ),
+                builder: (_, Widget child) {
+                  return OnboardingPageIndicator(
+                    currentPage: _currentPage,
+                    child: child,
+                    angle: _pageIndicatorAnimation.value,
+                  );
+                },
               ),
-            )
+            ),
           ],
         ),
       ),

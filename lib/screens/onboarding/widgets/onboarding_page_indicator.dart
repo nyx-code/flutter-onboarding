@@ -6,10 +6,14 @@ import 'package:flutter_onboarding/constants.dart';
 class OnboardingPageIndicator extends StatelessWidget {
   final int currentPage;
   final Widget child;
+  final double angle;
 
-  const OnboardingPageIndicator(
-      {Key key, @required this.currentPage, @required this.child})
-      : super(key: key);
+  const OnboardingPageIndicator({
+    Key key,
+    @required this.currentPage,
+    @required this.child,
+    @required this.angle,
+  }) : super(key: key);
 
   Color _getPageIndicatorColor(int pageIndex) {
     return currentPage > pageIndex ? white : white.withOpacity(0.25);
@@ -24,20 +28,22 @@ class OnboardingPageIndicator extends StatelessWidget {
       child: CustomPaint(
         painter: _OnboardignPageIndicatorPainter(
           color: _getPageIndicatorColor(0),
-          startAngle: (4 * indicatorLength) - (indicatorLength + indicatorGap),
+          startAngle:
+              (4 * indicatorLength) - (indicatorLength + indicatorGap) + angle,
           indicatorLength: indicatorLength,
         ),
         child: CustomPaint(
           painter: _OnboardignPageIndicatorPainter(
             color: _getPageIndicatorColor(1),
-            startAngle: (4 * indicatorLength),
+            startAngle: (4 * indicatorLength) + angle,
             indicatorLength: indicatorLength,
           ),
           child: CustomPaint(
             painter: _OnboardignPageIndicatorPainter(
               color: _getPageIndicatorColor(2),
-              startAngle:
-                  (4 * indicatorLength) + (indicatorLength + indicatorGap),
+              startAngle: (4 * indicatorLength) +
+                  (indicatorLength + indicatorGap) +
+                  angle,
               indicatorLength: indicatorLength,
             ),
             child: child,
