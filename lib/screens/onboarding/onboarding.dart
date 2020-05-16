@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_onboarding/constants.dart';
 import 'package:flutter_onboarding/screens/login/login.dart';
+import 'package:flutter_onboarding/screens/login/widgets/ripple.dart';
 import 'package:flutter_onboarding/screens/onboarding/pages/community/dark_card_content.dart';
 import 'package:flutter_onboarding/screens/onboarding/pages/community/light_card_content.dart';
 import 'package:flutter_onboarding/screens/onboarding/pages/community/text_column.dart';
@@ -31,11 +32,13 @@ class Onboarding extends StatefulWidget {
 
 class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
   AnimationController _cardsAnimationController;
+  AnimationController _pageIndicatorAnimationController;
+  AnimationController _rippleAnimationController;
+
   Animation<Offset> _slideAnimationLightCard;
   Animation<Offset> _slideAnimationDarkCard;
-
-  AnimationController _pageIndicatorAnimationController;
   Animation<double> _pageIndicatorAnimation;
+  Animation<double> _rippleAnimation;
 
   @override
   void initState() {
@@ -49,15 +52,21 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
       vsync: this,
       duration: buttonAnimationDuration,
     );
+    _rippleAnimationController = AnimationController(
+      vsync: this,
+      duration: rippleAnimationDuration,
+    );
 
     _setCardsSlideInAnimation();
     _setPageIndiactorAnimation();
+    _setRippleAnimation();
   }
 
   @override
   void dispose() {
     _cardsAnimationController.dispose();
     _pageIndicatorAnimationController.dispose();
+    _rippleAnimationController.dispose();
     super.dispose();
   }
 
@@ -114,6 +123,18 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
       ).animate(CurvedAnimation(
         parent: _cardsAnimationController,
         curve: Curves.easeOut,
+      ));
+    });
+  }
+
+  void _setRippleAnimation() {
+    setState(() {
+      _rippleAnimation = Tween<double>(
+        begin: 0.0,
+        end: widget.screenHeight,
+      ).animate(CurvedAnimation(
+        parent: _rippleAnimationController,
+        curve: Curves.easeIn,
       ));
     });
   }
@@ -185,53 +206,68 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
         break;
       case 3:
         if (_pageIndicatorAnimation.status == AnimationStatus.completed) {
-          _goToLogin();
+          await _goToLogin();
         }
         break;
       default:
     }
   }
 
-  void _goToLogin() {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => Login()));
+  Future<void> _goToLogin() async {
+    await _rippleAnimationController.forward();
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => Login(),
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: blue,
-      body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
-              child: Header(
-                onSkip: _goToLogin,
-              ),
-            ),
-            Expanded(
-              child: _getPage(),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: paddingL),
-              child: AnimatedBuilder(
-                animation: _pageIndicatorAnimation,
-                child: NextPageButton(
-                  onPressed: () async => await _nextPage(),
+      body: Stack(
+        children: <Widget>[
+          SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32.0, vertical: 16.0),
+                  child: Header(
+                    onSkip: _goToLogin,
+                  ),
                 ),
-                builder: (_, Widget child) {
-                  return OnboardingPageIndicator(
-                    currentPage: _currentPage,
-                    child: child,
-                    angle: _pageIndicatorAnimation.value,
-                  );
-                },
-              ),
+                Expanded(
+                  child: _getPage(),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: paddingL),
+                  child: AnimatedBuilder(
+                    animation: _pageIndicatorAnimation,
+                    child: NextPageButton(
+                      onPressed: () async => await _nextPage(),
+                    ),
+                    builder: (_, Widget child) {
+                      return OnboardingPageIndicator(
+                        currentPage: _currentPage,
+                        child: child,
+                        angle: _pageIndicatorAnimation.value,
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          AnimatedBuilder(
+            animation: _rippleAnimation,
+            builder: (_, Widget child) {
+              return Ripple(
+                radius: _rippleAnimation.value,
+              );
+            },
+          ),
+        ],
       ),
     );
   }
